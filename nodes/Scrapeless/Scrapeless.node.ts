@@ -2,12 +2,13 @@
 import { IExecuteFunctions, INodeExecutionData, INodeType, INodeTypeDescription, NodeConnectionType, NodeOperationError } from 'n8n-workflow';
 
 import {
+	aiScraperFields,
 	crawlerFields,
 	scrapingApiFields,
 	universalScrapingApiFields,
 } from './descriptions';
 import { INodeContext } from './types';
-import { handleCrawlerOperation, handleScrapingApiOperation, handleUniversalScrapingApiOperation } from './actions';
+import { handleAiScraperOperation, handleCrawlerOperation, handleScrapingApiOperation, handleUniversalScrapingApiOperation } from './actions';
 
 const inputs = [NodeConnectionType.Main];
 const outputs = [NodeConnectionType.Main];
@@ -50,6 +51,10 @@ export class Scrapeless implements INodeType {
 					{
 						name: 'Crawler',
 						value: 'crawler',
+					},
+					{
+						name: 'AI Scraper',
+						value: 'aiScraper',
 					}
 				],
 				noDataExpression: true,
@@ -123,10 +128,61 @@ export class Scrapeless implements INodeType {
 				]
 			},
 
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				default: 'chatgpt',
+				noDataExpression: true,
+				displayOptions: {
+					show: {
+						resource: ['aiScraper'],
+					}
+				},
+				options: [
+					{
+						name: 'ChatGPT',
+						value: 'chatgpt',
+						action: 'ChatGPT',
+					},
+					{
+						name: 'Copilot',
+						value: 'copilot',
+						action: 'Copilot',
+					},
+					{
+						name: 'Gemini',
+						value: 'gemini',
+						action: 'Gemini',
+					},
+					{
+						name: 'Google AI Mode',
+						value: 'googleAiMode',
+						action: 'Google AI Mode',
+					},
+					{
+						name: 'Google AI Overview',
+						value: 'googleAiOverview',
+						action: 'Google AI Overview',
+					},
+					{
+						name: 'Grok',
+						value: 'grok',
+						action: 'Grok',
+					},
+					{
+						name: 'Perplexity',
+						value: 'perplexity',
+						action: 'Perplexity',
+					},
+				]
+			},
+
 			// every other operation is forData
 			...crawlerFields,
 			...universalScrapingApiFields,
 			...scrapingApiFields,
+			...aiScraperFields,
 		],
 		name: 'scrapeless',
 	};
@@ -165,6 +221,9 @@ export class Scrapeless implements INodeType {
 						break;
 					case 'scrapingApi':
 						responseItem = await handleScrapingApiOperation(helpers, operation, context);
+						break;
+					case 'aiScraper':
+						responseItem = await handleAiScraperOperation(helpers, operation, context);
 						break;
 					default:
 						throw new NodeOperationError(this.getNode(), `Unsupported resource: ${resource}`);

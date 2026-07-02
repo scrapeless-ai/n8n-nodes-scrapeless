@@ -1,6 +1,7 @@
 import { IHelpers, RequestResponse } from "../types";
 import { ResponseWithStatus } from "../types/base";
 import { ScrapingTaskRequest, ScrapingTaskResponse } from "../types/scraping";
+import { AiScraperResultResponse, AiScraperTaskResponse } from "../types/ai-scraper";
 import { CrawlParams, CrawlStatusResponse, ScrapeParams, ScrapeStatusResponse } from "../types/scraping-crawl";
 import { UniversalScrapingRequest } from "../types/universal";
 
@@ -287,6 +288,41 @@ export class ScrapingService extends BaseService {
 	*/
 	async getTaskResult<T>(taskId: string): Promise<ResponseWithStatus<T>> {
 		return this.request<T, true>(`${this.basePath}/result/${taskId}`, 'GET', undefined, {}, true);
+	}
+}
+
+export class AiScraperService extends BaseService {
+	private basePath = '/api/v2/scraper';
+
+	constructor({ apiKey, baseUrl, helpers }: { apiKey: string, baseUrl: string, helpers: IHelpers }) {
+		super(apiKey, baseUrl, 30_000, helpers);
+	}
+
+	/**
+	 * Create an LLM chat scraping task (e.g. ChatGPT, Perplexity, Gemini)
+	 * @param request Scraping request parameters including actor and input
+	 * @returns Task status and task_id used to poll the result
+	 */
+	async createTask(request: ScrapingTaskRequest): Promise<AiScraperTaskResponse> {
+		const requestWithSync = {
+			...request,
+			async: true
+		};
+
+		return await this.request<AiScraperTaskResponse>(
+			`${this.basePath}/request`,
+			'POST',
+			requestWithSync
+		);
+	}
+
+	/**
+	 * Get the result of an LLM chat scraping task
+	 * @param taskId The ID of the scraping task
+	 * @returns The task status, message (on failure), and task_result (on success)
+	 */
+	async getTaskResult(taskId: string): Promise<AiScraperResultResponse> {
+		return this.request<AiScraperResultResponse>(`${this.basePath}/result/${taskId}`, 'GET');
 	}
 }
 
