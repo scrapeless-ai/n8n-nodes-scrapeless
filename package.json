@@ -21,6 +21,9 @@
   "scripts": {
     "build": "tsc && gulp build:icons",
     "dev": "tsc --watch",
+    "n8n:custom-link": "mkdir -p \"$HOME/.n8n/custom\" && cd \"$HOME/.n8n/custom\" && ([ -f package.json ] || npm init -y) && npm link n8n-nodes-scrapeless",
+    "dev:link": "npm run build && npm link && npm run n8n:custom-link && npx -y n8n",
+    "dev:start": "npm run build && npx -y n8n",
     "format": "prettier nodes credentials --write",
     "lint": "eslint nodes credentials package.json",
     "lintfix": "eslint nodes credentials package.json --fix",
