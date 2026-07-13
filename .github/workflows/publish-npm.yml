@@ -8,13 +8,13 @@ on:
     branches:
       - main
     paths:
-      - 'credentials/**'
-      - 'nodes/**'
-      - 'package.json'
-      - 'tsconfig.json'
-      - 'gulpfile.js'
-      - 'README.md'
-      - 'LICENSE.md'
+      - "credentials/**"
+      - "nodes/**"
+      - "package.json"
+      - "tsconfig.json"
+      - "gulpfile.js"
+      - "README.md"
+      - "LICENSE.md"
 
 permissions:
   contents: write
@@ -33,8 +33,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          registry-url: 'https://registry.npmjs.org'
-          scope: '@scrapeless-ai'
+          registry-url: "https://registry.npmjs.org"
+          scope: "@scrapeless-ai"
 
       - uses: pnpm/action-setup@v4
         name: Install pnpm
@@ -144,8 +144,14 @@ jobs:
           git remote set-url origin git@github.com:${{ github.repository }}.git
           git push --follow-tags origin main
 
+      - name: Verify npm token
+        if: steps.check-commits.outputs.should_release == 'true'
+        run: npm whoami --registry=https://registry.npmjs.org/
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_PUBLISH }}
+
       - name: Publish package
         if: steps.check-commits.outputs.should_release == 'true'
         run: npm publish --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_PUBLISH }}

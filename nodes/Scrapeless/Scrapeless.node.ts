@@ -1,5 +1,5 @@
 /* eslint-disable n8n-nodes-base/node-param-operation-option-action-miscased */
-import { IExecuteFunctions, INodeExecutionData, INodeType, INodeTypeDescription, NodeConnectionType, NodeOperationError } from 'n8n-workflow';
+import { IExecuteFunctions, INodeExecutionData, INodeType, INodeTypeDescription, NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
 import {
 	aiScraperFields,
@@ -10,8 +10,8 @@ import {
 import { INodeContext } from './types';
 import { handleAiScraperOperation, handleCrawlerOperation, handleScrapingApiOperation, handleUniversalScrapingApiOperation } from './actions';
 
-const inputs = [NodeConnectionType.Main];
-const outputs = [NodeConnectionType.Main];
+const inputs = [NodeConnectionTypes.Main];
+const outputs = [NodeConnectionTypes.Main];
 
 export class Scrapeless implements INodeType {
 	description: INodeTypeDescription = {
