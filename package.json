@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-scrapeless",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Official n8n nodes for Scrapeless",
   "keywords": [
     "n8n-community-node-package",

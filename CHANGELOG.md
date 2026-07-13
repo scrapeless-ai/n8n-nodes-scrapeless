@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.5.0](https://github.com/scrapeless-ai/n8n-nodes-scrapeless/compare/v0.4.1...v0.5.0) (2026-07-13)
+
+
+### Features
+
+* 🎸 ai scraper nodes ([f265689](https://github.com/scrapeless-ai/n8n-nodes-scrapeless/commit/f2656893e03e312404ff21534200d299c4a6c5fb))
+
 ### [0.4.1](https://github.com/scrapeless-ai/n8n-nodes-scrapeless/compare/v0.4.0...v0.4.1) (2025-08-05)
 
 
