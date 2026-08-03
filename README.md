@@ -16,7 +16,6 @@ https://app.scrapeless.com/passport/register
 
 Once registered, you can find your API key here:
 
-
 Then you'll need to create a credential in n8n for Scrapeless.
 
 ![Add Credentials](images/add-credentials.png)
