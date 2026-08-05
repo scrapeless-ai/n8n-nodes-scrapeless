@@ -142,7 +142,7 @@ export class Scrapeless implements INodeType {
 					{
 						name: 'ChatGPT',
 						value: 'chatgpt',
-						action: 'ChatGPT',
+						action: 'Chat GPT',
 					},
 					{
 						name: 'Copilot',
