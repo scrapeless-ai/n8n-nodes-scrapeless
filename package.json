@@ -11,7 +11,8 @@
   "license": "MIT",
   "homepage": "https://scrapeless.com",
   "author": {
-    "name": "Scrapeless"
+    "name": "Scrapeless",
+    "email": "market@scrapeless.com"
   },
   "repository": {
     "type": "git",

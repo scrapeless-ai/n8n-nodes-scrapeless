@@ -1,4 +1,4 @@
-import { IDataObject, INodeExecutionData } from "n8n-workflow";
+import { IDataObject, INodeExecutionData, sleep } from "n8n-workflow";
 import { getRequestConfig } from "../../common";
 import { IHelpers, INodeContext } from "../../types";
 import { AiScraperService, ScrapelessError } from "../../libs/request";
@@ -120,7 +120,7 @@ export async function handleAiScraperOperation(helpers: IHelpers, operation: str
 
 	// Otherwise poll the result endpoint every 15s until it succeeds or fails.
 	while (true) {
-		await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+		await sleep(POLL_INTERVAL_MS);
 
 		const result = await client.getTaskResult(task.task_id);
 

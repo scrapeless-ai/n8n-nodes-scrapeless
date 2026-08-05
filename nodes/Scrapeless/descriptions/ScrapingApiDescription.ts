@@ -202,7 +202,7 @@ const googleSearchApiFields: INodeProperties[] =  [
 		},
 	},
 	{
-		displayName: 'Exclude Auto-corrected Results',
+		displayName: 'Exclude Auto-Corrected Results',
 		name: 'nfpr',
 		type: 'options',
 		hint: "Parameter defines the exclusion of results from an auto-corrected query when the original query is spelled wrong. It can be set to `1` to exclude these results, or `0` to include them (default). Note that this parameter may not prevent Google from returning results for an auto-corrected query if no other results are available.",
@@ -314,7 +314,7 @@ const googleTrendsApiFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Time zone',
+		displayName: 'Time Zone',
 		name: 'tz',
 		type: 'string',
 		default: '420',
