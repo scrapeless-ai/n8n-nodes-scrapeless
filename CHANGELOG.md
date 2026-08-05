@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.5.3](https://github.com/scrapeless-ai/n8n-nodes-scrapeless/compare/v0.5.2...v0.5.3) (2026-08-05)
+
+
+### Bug Fixes
+
+* 🐛 n8n-linter-violations ([f5ef980](https://github.com/scrapeless-ai/n8n-nodes-scrapeless/commit/f5ef980ea070b7eb37691957cc24d14aec1b6ea4))
+
 ### [0.5.2](https://github.com/scrapeless-ai/n8n-nodes-scrapeless/compare/v0.5.1...v0.5.2) (2026-08-03)
 
 ### [0.5.1](https://github.com/scrapeless-ai/n8n-nodes-scrapeless/compare/v0.5.0...v0.5.1) (2026-08-03)
