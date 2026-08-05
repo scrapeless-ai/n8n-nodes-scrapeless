@@ -1,3 +1,4 @@
+import { sleep } from "n8n-workflow";
 import { IHelpers, RequestResponse } from "../types";
 import { ResponseWithStatus } from "../types/base";
 import { ScrapingTaskRequest, ScrapingTaskResponse } from "../types/scraping";
@@ -149,31 +150,27 @@ export class ScrapingCrawl extends BaseService {
 	* @returns Job info
 	*/
 	async monitorJobStatus(id: string, pollInterval: number): Promise<CrawlStatusResponse> {
-		try {
-			while (true) {
-				let statusResponse = await this.request<any>(`/api/v1/crawler/crawl/${id}`, 'GET');
-				if (statusResponse.status === 'completed') {
-					if ('data' in statusResponse) {
-						let data = statusResponse.data;
-						while (typeof statusResponse === 'object' && 'next' in statusResponse) {
-							if (data.length === 0) break;
-							statusResponse = await this.request<any>(statusResponse.next, 'GET');
-							data = data.concat(statusResponse.data);
-						}
-						statusResponse.data = data;
-						return statusResponse;
-					} else {
-						throw new ScrapelessError('Crawl job completed but no data was returned', 500);
+		while (true) {
+			let statusResponse = await this.request<any>(`/api/v1/crawler/crawl/${id}`, 'GET');
+			if (statusResponse.status === 'completed') {
+				if ('data' in statusResponse) {
+					let data = statusResponse.data;
+					while (typeof statusResponse === 'object' && 'next' in statusResponse) {
+						if (data.length === 0) break;
+						statusResponse = await this.request<any>(statusResponse.next, 'GET');
+						data = data.concat(statusResponse.data);
 					}
-				} else if (['active', 'paused', 'pending', 'queued', 'waiting', 'scraping'].includes(statusResponse.status)) {
-					pollInterval = Math.max(pollInterval, 2);
-					await new Promise(resolve => setTimeout(resolve, pollInterval * 1000));
+					statusResponse.data = data;
+					return statusResponse;
 				} else {
-					throw new ScrapelessError(`Crawl job failed or was stopped. Status: ${statusResponse.status}`, 500);
+					throw new ScrapelessError('Crawl job completed but no data was returned', 500);
 				}
+			} else if (['active', 'paused', 'pending', 'queued', 'waiting', 'scraping'].includes(statusResponse.status)) {
+				pollInterval = Math.max(pollInterval, 2);
+				await sleep(pollInterval * 1000);
+			} else {
+				throw new ScrapelessError(`Crawl job failed or was stopped. Status: ${statusResponse.status}`, 500);
 			}
-		} catch (error: any) {
-			throw new ScrapelessError(error.message, error.statusCode || 500);
 		}
 	}
 
@@ -186,16 +183,12 @@ export class ScrapingCrawl extends BaseService {
 	 */
 	async crawlUrl(url: string, params?: CrawlParams, pollInterval: number = 2): Promise<CrawlStatusResponse> {
 		const jsonData: any = { url, ...params };
-		try {
-			const response = await this.request<any>('/api/v1/crawler/crawl', 'POST', jsonData);
+		const response = await this.request<any>('/api/v1/crawler/crawl', 'POST', jsonData);
 
-			if (response.id) {
-				return this.monitorJobStatus(response.id, pollInterval);
-			} else {
-				throw new ScrapelessError('Failed to start a crawl job', 400);
-			}
-		} catch (error: any) {
-			throw new ScrapelessError(error.message, error.statusCode || 500);
+		if (response.id) {
+			return this.monitorJobStatus(response.id, pollInterval);
+		} else {
+			throw new ScrapelessError('Failed to start a crawl job', 400);
 		}
 	}
 
@@ -214,24 +207,20 @@ export class ScrapingCrawl extends BaseService {
 	): Promise<any> {
 		const jsonData: any = { url, ...params };
 
-		try {
-			const response = await this.request<any>('/api/v1/crawler/scrape', 'POST', jsonData, {});
+		const response = await this.request<any>('/api/v1/crawler/scrape', 'POST', jsonData, {});
 
-			if (!response.id) {
-				throw new ScrapelessError('Failed to start a scrape job', 400);
+		if (!response.id) {
+			throw new ScrapelessError('Failed to start a scrape job', 400);
+		}
+
+		while (true) {
+			const statusResponse = (await this.checkScrapeStatus(response.id)) as ScrapeStatusResponse<any>;
+			if (statusResponse.status !== 'scraping') {
+				return statusResponse;
 			}
 
-			while (true) {
-				const statusResponse = (await this.checkScrapeStatus(response.id)) as ScrapeStatusResponse<any>;
-				if (statusResponse.status !== 'scraping') {
-					return statusResponse;
-				}
-
-				pollInterval = Math.max(pollInterval, 2);
-				await new Promise(resolve => setTimeout(resolve, pollInterval * 1000));
-			}
-		} catch (error: any) {
-			throw new ScrapelessError(error.message, error.statusCode || 500);
+			pollInterval = Math.max(pollInterval, 2);
+			await sleep(pollInterval * 1000);
 		}
 	}
 
@@ -245,12 +234,7 @@ export class ScrapingCrawl extends BaseService {
 			throw new ScrapelessError('No scrape ID provided', 400);
 		}
 		const url = `/api/v1/crawler/scrape/${id}`;
-		try {
-			const response = await this.request<any>(url, 'GET');
-			return response;
-		} catch (error: any) {
-			throw new ScrapelessError(error.message, error.statusCode || 500);
-		}
+		return this.request<any>(url, 'GET');
 	}
 }
 

@@ -1,5 +1,4 @@
-/* eslint-disable n8n-nodes-base/node-param-operation-option-action-miscased */
-import { IExecuteFunctions, INodeExecutionData, INodeType, INodeTypeDescription, NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
+import { IExecuteFunctions, INodeExecutionData, INodeType, INodeTypeDescription, JsonObject, NodeApiError, NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
 import {
 	aiScraperFields,
@@ -99,7 +98,7 @@ export class Scrapeless implements INodeType {
 					{
 						name: 'Web Unlocker',
 						value: 'webUnlocker',
-						action: 'Web Unlocker',
+						action: 'Web unlocker',
 					},
 				]
 			},
@@ -118,12 +117,12 @@ export class Scrapeless implements INodeType {
 					{
 						name: 'Google Search',
 						value: 'googleSearch',
-						action: 'Google Search',
+						action: 'Google search',
 					},
 					{
 						name: 'Google Trends',
 						value: 'googleTrends',
-						action: 'Google Trends',
+						action: 'Google trends',
 					},
 				]
 			},
@@ -158,12 +157,12 @@ export class Scrapeless implements INodeType {
 					{
 						name: 'Google AI Mode',
 						value: 'googleAiMode',
-						action: 'Google AI Mode',
+						action: 'Google AI mode',
 					},
 					{
 						name: 'Google AI Overview',
 						value: 'googleAiOverview',
-						action: 'Google AI Overview',
+						action: 'Google AI overview',
 					},
 					{
 						name: 'Grok',
@@ -210,6 +209,7 @@ export class Scrapeless implements INodeType {
 
 				let responseItem: INodeExecutionData = {
 					json: {},
+					pairedItem: { item: i },
 				};
 
 				switch (resource) {
@@ -230,18 +230,19 @@ export class Scrapeless implements INodeType {
 				}
 
 
+				responseItem.pairedItem = { item: i };
 				returnData.push(responseItem);
 			} catch (error) {
-				// 에러 처리
 				if (this.continueOnFail()) {
 					returnData.push({
 						json: {
 							error: (error as Error).message,
 						},
+						pairedItem: { item: i },
 					});
 					continue;
 				}
-				throw error;
+				throw new NodeApiError(this.getNode(), error as JsonObject);
 			}
 		}
 

@@ -1,4 +1,4 @@
-import { IDataObject, INodeExecutionData } from "n8n-workflow";
+import { IDataObject, INodeExecutionData, sleep } from "n8n-workflow";
 import { getRequestConfig } from "../../common";
 import { IHelpers, INodeContext } from "../../types";
 import { ScrapingService } from "../../libs/request";
@@ -74,7 +74,7 @@ async function handleScrapingApiGoogleSearch(helpers: IHelpers, context: INodeCo
 	}
 
 	while (true) {
-		await new Promise(resolve => setTimeout(resolve, 1000));
+		await sleep(1000);
 		const result = await client.getTaskResult(task.data.taskId);
 
 		if (result.status === 200) {
@@ -128,7 +128,7 @@ async function handleScrapingApiGoogleTrends(helpers: IHelpers, context: INodeCo
 	}
 
 	while (true) {
-		await new Promise(resolve => setTimeout(resolve, 1000));
+		await sleep(1000);
 		const result = await client.getTaskResult(task.data.taskId);
 
 		if (result.status === 200) {
