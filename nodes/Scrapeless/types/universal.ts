@@ -36,7 +36,7 @@ export interface JsInstruction {
   fill?: string[];
   /**
    * [Keyboard
-   * Operations](https://docs.scrapeless.com/en/web-unlocker/features/js-render/#keyboard-operations)
+   * Operations](https://docs.scrapeless.com/en/docs/web-unlocker/js-render/#keyboard-operations)
    */
   keyboard?: Array<number | string>;
   wait?: number;

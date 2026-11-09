@@ -1,0 +1,335 @@
+{
+  "name": "AI Brand Monitor - ChatGPT + Perplexity",
+  "nodes": [
+    {
+      "id": "00000000-0000-4000-8000-36bde66f289a",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "00000000-0000-4000-8000-0831fbee8735",
+      "name": "Configure Monitor",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Edit only this configuration object. Never put an API key here.\nconst config = {\n  \"brand\": \"Company A\",\n  \"aliases\": [\n    \"Company A\",\n    \"Company-A\"\n  ],\n  \"domains\": [\n    \"example.com\"\n  ],\n  \"country\": \"US\",\n  \"prompts\": [\n    {\n      \"id\": \"selection-criteria\",\n      \"text\": \"What criteria should a small engineering team compare when choosing a service for collecting public web data? Explain the tradeoffs and cite sources.\"\n    }\n  ]\n};\n\nfunction hostnameFromUrl(value) {\n  if (typeof value !== 'string' || /[\\s\\\\\\u0000-\\u001f]/u.test(value)) return null;\n  // Only absolute HTTP(S) links without userinfo. No network request is made.\n  const match = /^https?:\\/\\/([a-z0-9.-]+)(?::([0-9]{1,5}))?(?:[/?#]|$)/i.exec(value);\n  if (!match || (match[2] && Number(match[2]) > 65535)) return null;\n  const host = match[1].toLowerCase().replace(/\\.$/, '');\n  if (host.length > 253 || !host.split('.').every(label => /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i.test(label))) return null;\n  return host;\n}\n\nfunction validateConfig(config) {\n  if (!config || typeof config !== 'object' || Array.isArray(config)) throw new Error('Monitor configuration must be an object.');\n  if (typeof config.brand !== 'string' || !config.brand.trim()) throw new Error('brand must be a non-empty string.');\n  if (!Array.isArray(config.aliases) || config.aliases.some(v => typeof v !== 'string' || !v.trim())) throw new Error('aliases must be an array of non-empty strings.');\n  if (!Array.isArray(config.domains) || !config.domains.length) throw new Error('domains must contain at least one hostname.');\n  const domains = config.domains.map(domain => {\n    if (typeof domain !== 'string' || !/^[a-z0-9.-]+$/i.test(domain) || !domain.includes('.')) throw new Error('Use bare ASCII hostnames in domains, for example example.com.');\n    const host = hostnameFromUrl('https://' + domain);\n    if (!host) throw new Error('Invalid domain hostname.');\n    return host;\n  });\n  if (typeof config.country !== 'string' || !/^[A-Z]{2}$/.test(config.country)) throw new Error('country must be a two-letter uppercase country code supported by the actor.');\n  if (!Array.isArray(config.prompts) || !config.prompts.length || config.prompts.length > 10) throw new Error('Provide between 1 and 10 prompts per run.');\n  const ids = new Set();\n  const prompts = config.prompts.map(prompt => {\n    if (!prompt || typeof prompt.id !== 'string' || !/^[a-z0-9][a-z0-9_-]{0,63}$/i.test(prompt.id)) throw new Error('Each prompt needs an alphanumeric id, up to 64 characters.');\n    if (ids.has(prompt.id)) throw new Error('Prompt ids must be unique.');\n    ids.add(prompt.id);\n    if (typeof prompt.text !== 'string' || !prompt.text.trim()) throw new Error('Each prompt needs non-empty text.');\n    return { id: prompt.id, text: prompt.text.trim() };\n  });\n  return {\n    brand: config.brand.trim(),\n    aliases: [...new Set([config.brand.trim(), ...config.aliases.map(v => v.trim())])],\n    domains: [...new Set(domains)],\n    country: config.country,\n    prompts,\n  };\n}\nreturn [{ json: { ...validateConfig(config), data_mode: \"live\" } }];"
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-5e4fd7cc1328",
+      "name": "Prepare Prompts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function hostnameFromUrl(value) {\n  if (typeof value !== 'string' || /[\\s\\\\\\u0000-\\u001f]/u.test(value)) return null;\n  // Only absolute HTTP(S) links without userinfo. No network request is made.\n  const match = /^https?:\\/\\/([a-z0-9.-]+)(?::([0-9]{1,5}))?(?:[/?#]|$)/i.exec(value);\n  if (!match || (match[2] && Number(match[2]) > 65535)) return null;\n  const host = match[1].toLowerCase().replace(/\\.$/, '');\n  if (host.length > 253 || !host.split('.').every(label => /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i.test(label))) return null;\n  return host;\n}\n\nfunction validateConfig(config) {\n  if (!config || typeof config !== 'object' || Array.isArray(config)) throw new Error('Monitor configuration must be an object.');\n  if (typeof config.brand !== 'string' || !config.brand.trim()) throw new Error('brand must be a non-empty string.');\n  if (!Array.isArray(config.aliases) || config.aliases.some(v => typeof v !== 'string' || !v.trim())) throw new Error('aliases must be an array of non-empty strings.');\n  if (!Array.isArray(config.domains) || !config.domains.length) throw new Error('domains must contain at least one hostname.');\n  const domains = config.domains.map(domain => {\n    if (typeof domain !== 'string' || !/^[a-z0-9.-]+$/i.test(domain) || !domain.includes('.')) throw new Error('Use bare ASCII hostnames in domains, for example example.com.');\n    const host = hostnameFromUrl('https://' + domain);\n    if (!host) throw new Error('Invalid domain hostname.');\n    return host;\n  });\n  if (typeof config.country !== 'string' || !/^[A-Z]{2}$/.test(config.country)) throw new Error('country must be a two-letter uppercase country code supported by the actor.');\n  if (!Array.isArray(config.prompts) || !config.prompts.length || config.prompts.length > 10) throw new Error('Provide between 1 and 10 prompts per run.');\n  const ids = new Set();\n  const prompts = config.prompts.map(prompt => {\n    if (!prompt || typeof prompt.id !== 'string' || !/^[a-z0-9][a-z0-9_-]{0,63}$/i.test(prompt.id)) throw new Error('Each prompt needs an alphanumeric id, up to 64 characters.');\n    if (ids.has(prompt.id)) throw new Error('Prompt ids must be unique.');\n    ids.add(prompt.id);\n    if (typeof prompt.text !== 'string' || !prompt.text.trim()) throw new Error('Each prompt needs non-empty text.');\n    return { id: prompt.id, text: prompt.text.trim() };\n  });\n  return {\n    brand: config.brand.trim(),\n    aliases: [...new Set([config.brand.trim(), ...config.aliases.map(v => v.trim())])],\n    domains: [...new Set(domains)],\n    country: config.country,\n    prompts,\n  };\n}\n\nfunction preparePrompts(config, runId, startedAt, dataMode = 'live') {\n  const valid = validateConfig(config);\n  if (!['live', 'synthetic'].includes(dataMode)) throw new Error('Unsupported data mode.');\n  return valid.prompts.map(prompt => ({\n    run_id: String(runId), run_started_at: startedAt, data_mode: dataMode,\n    brand: valid.brand, aliases: valid.aliases, domains: valid.domains,\n    country: valid.country, prompt_id: prompt.id, prompt: prompt.text,\n    web_search_requested: true, shopping_requested: false,\n  }));\n}\nconst config = $input.first().json;\nreturn preparePrompts(config, $execution.id, new Date().toISOString(), config.data_mode).map(json => ({ json }));"
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-8556c88f986e",
+      "name": "Scrapeless ChatGPT",
+      "type": "n8n-nodes-scrapeless.scrapeless",
+      "typeVersion": 1,
+      "position": [
+        740,
+        140
+      ],
+      "parameters": {
+        "resource": "aiScraper",
+        "operation": "chatgpt",
+        "prompt": "={{ $json.prompt }}",
+        "country": "={{ $json.country }}",
+        "web_search": true,
+        "shopping": false
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": false,
+      "notes": "Bind your Scrapeless API credential. No automatic retries, to avoid duplicate billable tasks. Errors are normalized downstream."
+    },
+    {
+      "id": "00000000-0000-4000-8000-ed02c46d9131",
+      "name": "Normalize ChatGPT",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        140
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function hostnameFromUrl(value) {\n  if (typeof value !== 'string' || /[\\s\\\\\\u0000-\\u001f]/u.test(value)) return null;\n  // Only absolute HTTP(S) links without userinfo. No network request is made.\n  const match = /^https?:\\/\\/([a-z0-9.-]+)(?::([0-9]{1,5}))?(?:[/?#]|$)/i.exec(value);\n  if (!match || (match[2] && Number(match[2]) > 65535)) return null;\n  const host = match[1].toLowerCase().replace(/\\.$/, '');\n  if (host.length > 253 || !host.split('.').every(label => /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i.test(label))) return null;\n  return host;\n}\n\nfunction answerTextForMatching(markdown) {\n  // Keep answer text and link labels, excluding non-visible markup and code.\n  return markdown\n    .replace(/```[\\s\\S]*?```/g, ' ')\n    .replace(/`[^`\\n]*`/g, ' ')\n    .replace(/<!--[\\s\\S]*?-->/g, ' ')\n    .replace(/<(script|style)\\b[^>]*>[\\s\\S]*?<\\/\\1\\s*>/gi, ' ')\n    .replace(/<\\/?[a-z][a-z0-9:-]*(?:\\s+(?:\"[^\"]*\"|'[^']*'|[^'\">])*)?\\s*\\/?>/gi, ' ')\n    .replace(/!\\[[^\\]]*\\]\\([^)]*\\)/g, ' ')\n    .replace(/\\[([^\\]]+)\\]\\([^)]*\\)/g, '$1')\n    .replace(/^\\s*\\[[^\\]]+\\]:\\s*https?:\\/\\/\\S+.*$/gm, ' ')\n    .replace(/https?:\\/\\/[^\\s<>]+/gi, ' ')\n    .normalize('NFKC');\n}\n\nfunction findAliases(answer, aliases) {\n  const visible = answerTextForMatching(answer);\n  return aliases.filter(alias => {\n    const literal = alias.normalize('NFKC').replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n    return new RegExp('(?<![\\\\p{L}\\\\p{N}_])' + literal + '(?![\\\\p{L}\\\\p{N}_])', 'iu').test(visible);\n  });\n}\n\nfunction normalizeObservation(raw, context, engine, observedAt) {\n  if (!['chatgpt', 'perplexity'].includes(engine)) throw new Error('Unsupported engine.');\n  const base = {\n    observation_id: context.run_id + ':' + context.prompt_id + ':' + engine,\n    run_id: context.run_id, run_started_at: context.run_started_at,\n    observed_at: observedAt, data_mode: context.data_mode,\n    prompt_id: context.prompt_id, prompt: context.prompt,\n    brand: context.brand, country: context.country, engine,\n    web_search_requested: context.web_search_requested,\n    shopping_requested: engine === 'chatgpt' ? false : null,\n    web_search_reported: typeof raw?.web_search === 'boolean' ? raw.web_search : null,\n    status: 'error', error: null, answer: null,\n    brand_mentioned: null, matched_aliases: [],\n    source_field: engine === 'chatgpt' ? 'content_references' : 'web_results',\n    source_status: 'unavailable', source_count: null,\n    source_urls: [], brand_source_found: null, matched_source_urls: [],\n  };\n  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { ...base, error: 'Invalid response object.' };\n  if (raw.error !== undefined) {\n    // Keep raw exception details in the private execution, not in exported files.\n    return { ...base, error: 'Collection failed. Inspect this node in the private n8n execution.' };\n  }\n  if (typeof raw.result_text !== 'string') return { ...base, error: 'Missing or invalid result_text.' };\n  if (!raw.result_text.trim()) return { ...base, status: 'empty', error: null, answer: '' };\n  const matchedAliases = findAliases(raw.result_text, context.aliases);\n  const row = {\n    ...base, status: 'ok', answer: raw.result_text,\n    brand_mentioned: matchedAliases.length > 0, matched_aliases: matchedAliases,\n  };\n  const sources = raw[row.source_field];\n  if (sources === undefined || sources === null) return row;\n  if (!Array.isArray(sources)) return { ...row, source_status: 'invalid' };\n  let invalidCount = 0;\n  const urls = new Set();\n  for (const entry of sources) {\n    const url = typeof entry === 'string' ? entry : entry?.url;\n    const host = hostnameFromUrl(url);\n    if (!host) { invalidCount++; continue; }\n    urls.add(url);\n  }\n  const sourceUrls = [...urls];\n  const matching = sourceUrls.filter(url => {\n    const host = hostnameFromUrl(url);\n    return context.domains.some(domain => host === domain || host.endsWith('.' + domain));\n  });\n  return {\n    ...row, source_status: invalidCount ? 'invalid' : 'available',\n    source_count: invalidCount ? null : sourceUrls.length,\n    source_urls: sourceUrls,\n    // Incomplete or malformed source lists are excluded from the source rate.\n    brand_source_found: invalidCount ? null : matching.length > 0,\n    matched_source_urls: matching,\n  };\n}\nreturn $input.all().map((item, i) => {\n  const context = $('Prepare Prompts').itemMatching(i).json;\n  return { json: normalizeObservation(item.json, context, 'chatgpt', new Date().toISOString()), pairedItem: { item: i } };\n});"
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-b70c65608847",
+      "name": "Scrapeless Perplexity",
+      "type": "n8n-nodes-scrapeless.scrapeless",
+      "typeVersion": 1,
+      "position": [
+        740,
+        460
+      ],
+      "parameters": {
+        "resource": "aiScraper",
+        "operation": "perplexity",
+        "prompt": "={{ $json.prompt }}",
+        "country": "={{ $json.country }}",
+        "web_search": true
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": false,
+      "notes": "Bind your Scrapeless API credential. No automatic retries, to avoid duplicate billable tasks. Errors are normalized downstream."
+    },
+    {
+      "id": "00000000-0000-4000-8000-65dc58077138",
+      "name": "Normalize Perplexity",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        460
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function hostnameFromUrl(value) {\n  if (typeof value !== 'string' || /[\\s\\\\\\u0000-\\u001f]/u.test(value)) return null;\n  // Only absolute HTTP(S) links without userinfo. No network request is made.\n  const match = /^https?:\\/\\/([a-z0-9.-]+)(?::([0-9]{1,5}))?(?:[/?#]|$)/i.exec(value);\n  if (!match || (match[2] && Number(match[2]) > 65535)) return null;\n  const host = match[1].toLowerCase().replace(/\\.$/, '');\n  if (host.length > 253 || !host.split('.').every(label => /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i.test(label))) return null;\n  return host;\n}\n\nfunction answerTextForMatching(markdown) {\n  // Keep answer text and link labels, excluding non-visible markup and code.\n  return markdown\n    .replace(/```[\\s\\S]*?```/g, ' ')\n    .replace(/`[^`\\n]*`/g, ' ')\n    .replace(/<!--[\\s\\S]*?-->/g, ' ')\n    .replace(/<(script|style)\\b[^>]*>[\\s\\S]*?<\\/\\1\\s*>/gi, ' ')\n    .replace(/<\\/?[a-z][a-z0-9:-]*(?:\\s+(?:\"[^\"]*\"|'[^']*'|[^'\">])*)?\\s*\\/?>/gi, ' ')\n    .replace(/!\\[[^\\]]*\\]\\([^)]*\\)/g, ' ')\n    .replace(/\\[([^\\]]+)\\]\\([^)]*\\)/g, '$1')\n    .replace(/^\\s*\\[[^\\]]+\\]:\\s*https?:\\/\\/\\S+.*$/gm, ' ')\n    .replace(/https?:\\/\\/[^\\s<>]+/gi, ' ')\n    .normalize('NFKC');\n}\n\nfunction findAliases(answer, aliases) {\n  const visible = answerTextForMatching(answer);\n  return aliases.filter(alias => {\n    const literal = alias.normalize('NFKC').replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n    return new RegExp('(?<![\\\\p{L}\\\\p{N}_])' + literal + '(?![\\\\p{L}\\\\p{N}_])', 'iu').test(visible);\n  });\n}\n\nfunction normalizeObservation(raw, context, engine, observedAt) {\n  if (!['chatgpt', 'perplexity'].includes(engine)) throw new Error('Unsupported engine.');\n  const base = {\n    observation_id: context.run_id + ':' + context.prompt_id + ':' + engine,\n    run_id: context.run_id, run_started_at: context.run_started_at,\n    observed_at: observedAt, data_mode: context.data_mode,\n    prompt_id: context.prompt_id, prompt: context.prompt,\n    brand: context.brand, country: context.country, engine,\n    web_search_requested: context.web_search_requested,\n    shopping_requested: engine === 'chatgpt' ? false : null,\n    web_search_reported: typeof raw?.web_search === 'boolean' ? raw.web_search : null,\n    status: 'error', error: null, answer: null,\n    brand_mentioned: null, matched_aliases: [],\n    source_field: engine === 'chatgpt' ? 'content_references' : 'web_results',\n    source_status: 'unavailable', source_count: null,\n    source_urls: [], brand_source_found: null, matched_source_urls: [],\n  };\n  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { ...base, error: 'Invalid response object.' };\n  if (raw.error !== undefined) {\n    // Keep raw exception details in the private execution, not in exported files.\n    return { ...base, error: 'Collection failed. Inspect this node in the private n8n execution.' };\n  }\n  if (typeof raw.result_text !== 'string') return { ...base, error: 'Missing or invalid result_text.' };\n  if (!raw.result_text.trim()) return { ...base, status: 'empty', error: null, answer: '' };\n  const matchedAliases = findAliases(raw.result_text, context.aliases);\n  const row = {\n    ...base, status: 'ok', answer: raw.result_text,\n    brand_mentioned: matchedAliases.length > 0, matched_aliases: matchedAliases,\n  };\n  const sources = raw[row.source_field];\n  if (sources === undefined || sources === null) return row;\n  if (!Array.isArray(sources)) return { ...row, source_status: 'invalid' };\n  let invalidCount = 0;\n  const urls = new Set();\n  for (const entry of sources) {\n    const url = typeof entry === 'string' ? entry : entry?.url;\n    const host = hostnameFromUrl(url);\n    if (!host) { invalidCount++; continue; }\n    urls.add(url);\n  }\n  const sourceUrls = [...urls];\n  const matching = sourceUrls.filter(url => {\n    const host = hostnameFromUrl(url);\n    return context.domains.some(domain => host === domain || host.endsWith('.' + domain));\n  });\n  return {\n    ...row, source_status: invalidCount ? 'invalid' : 'available',\n    source_count: invalidCount ? null : sourceUrls.length,\n    source_urls: sourceUrls,\n    // Incomplete or malformed source lists are excluded from the source rate.\n    brand_source_found: invalidCount ? null : matching.length > 0,\n    matched_source_urls: matching,\n  };\n}\nreturn $input.all().map((item, i) => {\n  const context = $('Prepare Prompts').itemMatching(i).json;\n  return { json: normalizeObservation(item.json, context, 'perplexity', new Date().toISOString()), pairedItem: { item: i } };\n});"
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-283128acef14",
+      "name": "Merge Observations",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1260,
+        300
+      ],
+      "parameters": {
+        "mode": "append",
+        "numberInputs": 2
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-56bfc2c9a68b",
+      "name": "Build Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1500,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function buildReport(rows, expectedContexts, generatedAt) {\n  const expected = new Set(expectedContexts.flatMap(context => ['chatgpt', 'perplexity'].map(engine => context.run_id + ':' + context.prompt_id + ':' + engine)));\n  const seen = new Set();\n  for (const row of rows) {\n    if (!expected.has(row.observation_id) || seen.has(row.observation_id)) throw new Error('Unexpected or duplicate observation; report not generated.');\n    seen.add(row.observation_id);\n    if (!['ok', 'empty', 'error'].includes(row.status)) throw new Error('Invalid observation status.');\n  }\n  if (seen.size !== expected.size) throw new Error('Missing observations; report not generated.');\n  const summary = ['chatgpt', 'perplexity'].map(engine => {\n    const all = rows.filter(row => row.engine === engine);\n    const valid = all.filter(row => row.status === 'ok');\n    const sources = valid.filter(row => row.source_status === 'available');\n    const mentions = valid.filter(row => row.brand_mentioned === true).length;\n    const hits = sources.filter(row => row.brand_source_found === true).length;\n    return {\n      engine, planned_observations: all.length, valid_answers: valid.length,\n      empty_answers: all.filter(row => row.status === 'empty').length,\n      errors: all.filter(row => row.status === 'error').length,\n      brand_mentions: mentions, mention_denominator: valid.length,\n      mention_rate: valid.length ? mentions / valid.length : null,\n      source_hits: hits, source_denominator: sources.length,\n      source_hit_rate: sources.length ? hits / sources.length : null,\n      unavailable_source_answers: valid.filter(row => row.source_status === 'unavailable').length,\n      invalid_source_answers: valid.filter(row => row.source_status === 'invalid').length,\n    };\n  });\n  const first = expectedContexts[0];\n  return {\n    schema_version: '1.0', data_mode: first.data_mode,\n    run_id: first.run_id, run_started_at: first.run_started_at, generated_at: generatedAt,\n    brand: first.brand, country: first.country,\n    report_complete: true,\n    all_answers_valid: rows.every(row => row.status === 'ok'),\n    planned_observations: expected.size,\n    definitions: {\n      mention_rate: 'Answers with a visible brand or alias match / valid answers. Range 0 to 1.',\n      source_hit_rate: 'Valid answers with a configured hostname in the returned source list / valid answers with a complete, parseable source list. Range 0 to 1.',\n      unknown: 'Null means unavailable or unmeasurable, not false or zero.',\n      source_limit: 'Returned sources do not establish inline citation, endorsement, rank, or sentiment.',\n    },\n    summary,\n    observations: [...rows].sort((a, b) => a.observation_id.localeCompare(b.observation_id)),\n  };\n}\nconst contexts = $('Prepare Prompts').all().map(item => item.json);\nreturn [{ json: buildReport($input.all().map(item => item.json), contexts, new Date().toISOString()) }];"
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-5bb8ae3a1799",
+      "name": "Download JSON Report",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1990,
+        140
+      ],
+      "parameters": {
+        "operation": "toJson",
+        "mode": "each",
+        "binaryPropertyName": "data",
+        "options": {
+          "fileName": "ai-brand-report.json",
+          "format": true
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-61c9da5c0937",
+      "name": "Flatten CSV Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1740,
+        460
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function flattenCsvRows(report) {\n  function safeCell(value) {\n    // Prevent spreadsheet formulas; JSON keeps the original text unchanged.\n    return typeof value === 'string' && /^[\\s\\u0000-\\u001f]*[=+@-]/u.test(value) ? \"'\" + value : value;\n  }\n  return report.observations.map(row => Object.fromEntries(Object.entries(row).map(([key, value]) => [\n    key, safeCell(value === null ? '' : Array.isArray(value) ? JSON.stringify(value) : value),\n  ])));\n}\nreturn flattenCsvRows($input.first().json).map(json => ({ json }));"
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-8eb436fc18e0",
+      "name": "Download CSV Observations",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1990,
+        460
+      ],
+      "parameters": {
+        "operation": "csv",
+        "binaryPropertyName": "data",
+        "options": {
+          "fileName": "ai-brand-observations.csv",
+          "headerRow": true
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-edb465624291",
+      "name": "Start Here",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -180
+      ],
+      "parameters": {
+        "width": 690,
+        "height": 260,
+        "content": "## AI Brand Monitor - ChatGPT + Perplexity\n1. Install n8n-nodes-scrapeless@0.5.4.\n2. Bind a Scrapeless API credential to both Scrapeless nodes.\n3. Edit Configure Monitor, then Execute workflow.\n4. Download JSON and CSV from the two final nodes.\n\nOne prompt creates two remote tasks. The 600s workflow timeout stops the local execution, not remote tasks. No automatic retries."
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Configure Monitor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configure Monitor": {
+      "main": [
+        [
+          {
+            "node": "Prepare Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Prompts": {
+      "main": [
+        [
+          {
+            "node": "Scrapeless ChatGPT",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Scrapeless Perplexity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrapeless ChatGPT": {
+      "main": [
+        [
+          {
+            "node": "Normalize ChatGPT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize ChatGPT": {
+      "main": [
+        [
+          {
+            "node": "Merge Observations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrapeless Perplexity": {
+      "main": [
+        [
+          {
+            "node": "Normalize Perplexity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Perplexity": {
+      "main": [
+        [
+          {
+            "node": "Merge Observations",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Observations": {
+      "main": [
+        [
+          {
+            "node": "Build Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Report": {
+      "main": [
+        [
+          {
+            "node": "Download JSON Report",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Flatten CSV Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flatten CSV Rows": {
+      "main": [
+        [
+          {
+            "node": "Download CSV Observations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "executionTimeout": 600
+  },
+  "tags": []
+}

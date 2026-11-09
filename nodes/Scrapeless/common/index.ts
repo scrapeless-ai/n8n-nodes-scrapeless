@@ -237,13 +237,6 @@ export const countryOptions = [
 			"emoji": "🇨🇺"
 	},
 	{
-			"regionId": 45,
-			"value": "CN",
-			"label": "China",
-			"signal": 2,
-			"emoji": "🇨🇳"
-	},
-	{
 			"regionId": 80,
 			"value": "GM",
 			"label": "Gambia The",
@@ -377,13 +370,6 @@ export const countryOptions = [
 			"emoji": "🇳🇱"
 	},
 	{
-			"regionId": 128,
-			"value": "MO",
-			"label": "Macau S.A.R.",
-			"signal": 2,
-			"emoji": "🇲🇴"
-	},
-	{
 			"regionId": 144,
 			"value": "MD",
 			"label": "Moldova",
@@ -501,13 +487,6 @@ export const countryOptions = [
 			"label": "Guyana",
 			"signal": 2,
 			"emoji": "🇬🇾"
-	},
-	{
-			"regionId": 98,
-			"value": "HK",
-			"label": "Hong Kong S.A.R.",
-			"signal": 2,
-			"emoji": "🇭🇰"
 	},
 	{
 			"regionId": 161,
@@ -1119,13 +1098,6 @@ export const countryOptions = [
 			"emoji": "🇪🇸"
 	},
 	{
-			"regionId": 216,
-			"value": "TW",
-			"label": "Taiwan",
-			"signal": 3,
-			"emoji": "🇹🇼"
-	},
-	{
 			"regionId": 213,
 			"value": "SE",
 			"label": "Sweden",
@@ -1439,10 +1411,6 @@ export const googleDomainOptions = [
 	{
 		"label": "google.gy",
 		"value": "google.gy"
-	},
-	{
-		"label": "google.com.hk",
-		"value": "google.com.hk"
 	},
 	{
 		"label": "google.hn",
@@ -1829,10 +1797,6 @@ export const googleDomainOptions = [
 		"value": "google.tt"
 	},
 	{
-		"label": "google.com.tw",
-		"value": "google.com.tw"
-	},
-	{
 		"label": "google.co.tz",
 		"value": "google.co.tz"
 	},
@@ -2076,10 +2040,6 @@ export const googleSearchCrOptions = [
 		"value": "countryCL"
 	},
 	{
-		"label": "China",
-		"value": "countryCN"
-	},
-	{
 		"label": "Christmas Island",
 		"value": "countryCX"
 	},
@@ -2292,10 +2252,6 @@ export const googleSearchCrOptions = [
 		"value": "countryHN"
 	},
 	{
-		"label": "Hong Kong",
-		"value": "countryHK"
-	},
-	{
 		"label": "Hungary",
 		"value": "countryHU"
 	},
@@ -2398,10 +2354,6 @@ export const googleSearchCrOptions = [
 	{
 		"label": "Luxembourg",
 		"value": "countryLU"
-	},
-	{
-		"label": "Macao",
-		"value": "countryMO"
 	},
 	{
 		"label": "Madagascar",
@@ -2744,10 +2696,6 @@ export const googleSearchCrOptions = [
 		"value": "countrySY"
 	},
 	{
-		"label": "Taiwan, Province of China",
-		"value": "countryTW"
-	},
-	{
 		"label": "Tajikistan",
 		"value": "countryTJ"
 	},
@@ -3042,14 +2990,6 @@ export const googleSearchLrOptions = [
 		"label": "Vietnamese",
 		"value": "lang_vi"
 	},
-	{
-		"label": "Chinese (Simplified)",
-		"value": "lang_zh-CN"
-	},
-	{
-		"label": "Chinese (Traditional)",
-		"value": "lang_zh-TW"
-	}
 ]
 
 export const googleSearchSafeOptions = [
@@ -3202,10 +3142,6 @@ export const googleTrendsGeoOptions = [
 		"value": "GR"
 	},
 	{
-		"label": "Hong Kong",
-		"value": "HK"
-	},
-	{
 		"label": "Hungary",
 		"value": "HU"
 	},
@@ -3312,10 +3248,6 @@ export const googleTrendsGeoOptions = [
 	{
 		"label": "Switzerland",
 		"value": "CH"
-	},
-	{
-		"label": "Taiwan",
-		"value": "TW"
 	},
 	{
 		"label": "Thailand",
@@ -7263,10 +7195,6 @@ export const googleTrendsCatOptions = [
 	{
 		"value": "1238",
 		"label": "Cleansing & Detoxification"
-	},
-	{
-		"value": "1239",
-		"label": "Acupuncture & Chinese Medicine"
 	},
 	{
 		"value": "1240",

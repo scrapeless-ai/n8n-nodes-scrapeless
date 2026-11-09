@@ -47,6 +47,8 @@ module.exports = {
 				'n8n-nodes-base/node-resource-description-filename-against-convention': 'off',
 				'n8n-nodes-base/node-param-fixed-collection-type-unsorted-items': 'off',
 				// Scrapeless added
+				// This package distributes raster icons.
+				'n8n-nodes-base/node-class-description-icon-not-svg': 'off',
 				'n8n-nodes-base/node-param-type-options-password-missing': 'off',
 				'n8n-nodes-base/node-param-display-name-miscased-id': 'off',
 				'n8n-nodes-base/node-param-collection-type-unsorted-items': 'off',

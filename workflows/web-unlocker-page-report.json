@@ -1,0 +1,244 @@
+{
+  "name": "Scrapeless Web Unlocker - Page to Report",
+  "nodes": [
+    {
+      "id": "manual-trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "configure-page",
+      "name": "Configure Page",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        220,
+        300
+      ],
+      "parameters": {
+        "jsCode": "// Set the public page and request region. Keep API keys in n8n credentials.\nconst config = {\n  url: 'https://www.scrapeless.com/en',\n  country: 'US',\n  max_body_characters: 20000,\n  max_links: 100,\n};\nif (!/^https?:\\/\\/[^\\s@]+$/i.test(config.url)) throw new Error('Enter an absolute public HTTP(S) URL without credentials.');\nif (!/^[A-Z]{2}$/.test(config.country)) throw new Error('Use a supported two-letter country code.');\nreturn [{ json: config }];"
+      }
+    },
+    {
+      "id": "scrapeless-web-unlocker",
+      "name": "Scrapeless Web Unlocker",
+      "type": "n8n-nodes-scrapeless.scrapeless",
+      "typeVersion": 1,
+      "position": [
+        460,
+        300
+      ],
+      "parameters": {
+        "resource": "universalScrapingApi",
+        "operation": "webUnlocker",
+        "url": "={{ $json.url }}",
+        "country": "={{ $json.country }}",
+        "jsRender": true,
+        "headless": true,
+        "jsInstructions": "[]",
+        "block": "{\"resources\":[\"image\",\"font\"],\"urls\":[]}"
+      }
+    },
+    {
+      "id": "validate-html",
+      "name": "Validate HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        700,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nif (raw.code !== 200 || typeof raw.data !== 'string' || !raw.data.trim()) {\n  throw new Error('Web Unlocker did not return a successful HTML response. Inspect the private execution.');\n}\nif (!/<(?:html|body|main|article)\\b/i.test(raw.data)) {\n  throw new Error('The response is not an HTML document.');\n}\nreturn [{ json: { html: raw.data, html_characters: raw.data.length } }];"
+      }
+    },
+    {
+      "id": "extract-page-content",
+      "name": "Extract Page Content",
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        940,
+        300
+      ],
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "sourceData": "json",
+        "dataPropertyName": "html",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "title",
+              "cssSelector": "title",
+              "returnValue": "text"
+            },
+            {
+              "key": "description",
+              "cssSelector": "meta[name=\"description\"]",
+              "returnValue": "attribute",
+              "attribute": "content"
+            },
+            {
+              "key": "headings",
+              "cssSelector": "h1, h2",
+              "returnValue": "text",
+              "returnArray": true
+            },
+            {
+              "key": "body",
+              "cssSelector": "body",
+              "returnValue": "text",
+              "skipSelectors": "script, style, noscript, template, svg, nav, header, footer, aside"
+            },
+            {
+              "key": "links",
+              "cssSelector": "a[href]",
+              "returnValue": "attribute",
+              "attribute": "href",
+              "returnArray": true
+            }
+          ]
+        },
+        "options": {
+          "trimValues": true,
+          "cleanUpText": true
+        }
+      }
+    },
+    {
+      "id": "build-page-report",
+      "name": "Build Page Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1180,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const page = $input.first().json;\nconst config = $('Configure Page').first().json;\nconst clean = value => typeof value === 'string' ? value.replace(/\\s+/g, ' ').trim() : '';\nconst title = clean(page.title);\nconst fullBody = clean(page.body);\nif (!title || fullBody.length < 100) throw new Error('No usable title/body was extracted. Check the page, selectors, redirects, or access challenges.');\nconst headings = [...new Set((page.headings || []).map(clean).filter(Boolean))];\nconst links = [...new Set((page.links || []).map(clean).filter(v => v && !/^(?:javascript:|data:|mailto:|tel:|#)/i.test(v)))].slice(0, config.max_links);\nconst bodyText = fullBody.slice(0, config.max_body_characters);\nconst report = {\n  target_url: config.url,\n  page_title: title,\n  description: clean(page.description),\n  headings,\n  body_text: bodyText,\n  links,\n  extraction: {\n    html_characters: $('Validate HTML').first().json.html_characters,\n    extracted_body_characters: fullBody.length,\n    exported_body_characters: bodyText.length,\n    body_truncated: bodyText.length < fullBody.length,\n    exported_links: links.length,\n    max_links: config.max_links,\n    links_are_raw_hrefs: true,\n  },\n};\nconst md = [\n  '# ' + title,\n  '',\n  'Source: ' + config.url,\n  '',\n  report.description,\n  '',\n  '## Headings',\n  ...headings.map(h => '- ' + h),\n  '',\n  '## Page text',\n  bodyText,\n  '',\n  '## Links (original href values)',\n  ...links.map(url => '- ' + url),\n  '',\n  '## Extraction notes',\n  '- Extracted page text; no AI-generated summary.',\n  '- Body text truncated: ' + report.extraction.body_truncated,\n  '- Exported links: ' + links.length + ' (limit ' + config.max_links + ').',\n].join('\\n');\nreturn [{ json: { ...report, report_markdown: md } }];"
+      }
+    },
+    {
+      "id": "download-json-report",
+      "name": "Download JSON Report",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1430,
+        180
+      ],
+      "parameters": {
+        "operation": "toJson",
+        "mode": "each",
+        "binaryPropertyName": "data",
+        "options": {
+          "fileName": "web-page-report.json",
+          "format": true
+        }
+      }
+    },
+    {
+      "id": "download-markdown-report",
+      "name": "Download Markdown Report",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1430,
+        420
+      ],
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "report_markdown",
+        "binaryPropertyName": "data",
+        "options": {
+          "fileName": "web-page-report.md"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Configure Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configure Page": {
+      "main": [
+        [
+          {
+            "node": "Scrapeless Web Unlocker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrapeless Web Unlocker": {
+      "main": [
+        [
+          {
+            "node": "Validate HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate HTML": {
+      "main": [
+        [
+          {
+            "node": "Extract Page Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Page Content": {
+      "main": [
+        [
+          {
+            "node": "Build Page Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Page Report": {
+      "main": [
+        [
+          {
+            "node": "Download JSON Report",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Download Markdown Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "executionTimeout": 120
+  },
+  "active": false,
+  "pinData": {}
+}

@@ -3,8 +3,8 @@ import { IAuthenticateGeneric, ICredentialTestRequest, ICredentialType, INodePro
 export class ScrapelessApi implements ICredentialType {
 	name = 'scrapelessApi';
 	displayName = 'Scrapeless API';
-	documentationUrl = 'https://docs.scrapeless.com/';
-	icon = 'file:scrapeless.svg' as Icon;
+	documentationUrl = 'https://docs.scrapeless.com/en/docs/get-started/get-and-protect-your-api-key/';
+	icon = 'file:scrapeless.png' as Icon;
 	properties: INodeProperties[] = [
 		{
 			displayName: 'API Key',
@@ -17,17 +17,17 @@ export class ScrapelessApi implements ICredentialType {
 	authenticate: IAuthenticateGeneric = {
 		type: 'generic',
 		properties: {
-			qs: {
-				api_key: '={{$credentials.apiKey}}',
+			headers: {
+				'x-api-token': '={{$credentials.apiKey}}',
 			},
 		},
 	};
 
 	test: ICredentialTestRequest = {
 		request: {
-			baseURL: 'https://backend.scrapeless.com/app/api',
+			baseURL: 'https://api.scrapeless.com',
 			method: 'GET',
-			url: '/v1/access-tokens/check/neQ1SREuZwIaaEinUkFcqMwTbMeDLix9',
+			url: '/api/v1/me',
 		},
 	};
 }
