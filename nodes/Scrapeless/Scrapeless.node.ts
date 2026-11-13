@@ -1,4 +1,4 @@
-import { IExecuteFunctions, INodeExecutionData, INodeType, INodeTypeDescription, JsonObject, NodeApiError, NodeConnectionType, NodeOperationError } from 'n8n-workflow';
+import { IExecuteFunctions, INodeExecutionData, INodeType, INodeTypeDescription, JsonObject, NodeApiError, type NodeConnectionType, NodeOperationError } from 'n8n-workflow';
 
 import {
 	aiScraperFields,
@@ -9,8 +9,8 @@ import {
 import { INodeContext } from './types';
 import { handleAiScraperOperation, handleCrawlerOperation, handleScrapingApiOperation, handleUniversalScrapingApiOperation } from './actions';
 
-const inputs = [NodeConnectionType.Main];
-const outputs = [NodeConnectionType.Main];
+const inputs = ['main' as NodeConnectionType];
+const outputs = ['main' as NodeConnectionType];
 
 export class Scrapeless implements INodeType {
 	description: INodeTypeDescription = {

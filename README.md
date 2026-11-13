@@ -11,7 +11,7 @@ This guide features two independent workflows: **AI brand monitoring with AI Scr
 Before starting, prepare a running self-hosted n8n instance with permission to install community nodes, plus a valid Scrapeless API key with available credits. This guide starts from an existing n8n instance.
 
 1. In self-hosted n8n, open **Settings → Community nodes → Install**.
-2. Enter `n8n-nodes-scrapeless@0.5.4` and complete the package installation.
+2. Enter `n8n-nodes-scrapeless` and complete the package installation.
 3. Add **Scrapeless Official** to a workflow, or import one of the JSON files below.
 4. Create a **Scrapeless API** credential and select it in each Scrapeless node.
 
